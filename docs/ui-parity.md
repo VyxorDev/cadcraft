@@ -155,7 +155,7 @@ down-arrow options menu (DYNPROMPT), and DYNDIM.
 
 | Feature | AutoCAD for Mac | CADCraft |
 |---|---|---|
-| Menu bar | 11 menus, 491 leaf items | same 11 menus; 250/491 items covered (233 by `cargo xtask parity`, which counts engine commands only, plus 17 UI-only items: see [parity-checklist.md](parity-checklist.md)) |
+| Menu bar | 11 menus, 491 leaf items | same 11 menus; 245/491 items covered (233 by `cargo xtask parity`, which counts engine commands only, plus 12 UI-only items: see [parity-checklist.md](parity-checklist.md)) |
 | Tool Bar, File tabs, Start tab, layout tabs | yes | yes |
 | Tool Sets palette (Drafting, Modeling, … with flyouts) | yes | yes for 2D groups |
 | Properties Inspector, Quick Properties | yes | yes (every control acts or is visibly unavailable, #182); block references show read-only Position X/Y/Z from their stored insertion point; coordinate editing is still missing |
@@ -202,7 +202,7 @@ down-arrow options menu (DYNPROMPT), and DYNDIM.
 
 | Date | Change | Summary |
 |---|---|---|
-| 2026-10-18 | minor | Help menu community and project links (Discord, CADCraft website, ArtCraft website, GitHub, Report an Issue; #1537, #1550); UI-only menu items 12 → 17, covered items 245 → 250 |
+| 2026-10-18 | minor | Help menu community and project links (Discord, CADCraft website, ArtCraft website, GitHub, Report an Issue; #1537, #1550) |
 | 2026-10-12 | minor | Selected and hovered objects redrawn in the selection colour (text and arrowheads included); Options ▸ Selection laid out as AutoCAD's: Object grouping, Show grips, grip object limit, selection preview, Visual Effect Settings (selection area, preview filter) |
 | 2026-10-12 | minor | Animation effects (dialog and menu fades, smoothed wheel scrolling and ⌘/Ctrl+wheel zoom) follow the operating system's setting; View ▸ Accessibility ▸ Animation Effects chooses System, On or Off |
 | 2026-10-12 | minor | Hatch and Gradient / Hatch Edit dialogs (HATCH, GRADIENT, HATCHEDIT, double-click a hatch; HPDLGMODE) |
@@ -210,4 +210,4 @@ down-arrow options menu (DYNPROMPT), and DYNDIM.
 | 2026-10-11 | minor | Isometric drafting (#556): isometric snap and grid, ISODRAFT, ISOPLANE (F5), ortho along isoplane axes, ELLIPSE Isocircle |
 | 2026-10-11 | minor | Object snap tracking, Extension, Parallel, Apparent Intersection, additional polar angles (#379): tracking 30% → 70%, object snaps 40% → 45%; total 43% → 48% |
 | 2026-10-10 | minor | Dynamic input 15% → 45% (pointer boxes, #60); press-drag windows (#63); total 40% → 43% |
-| 2026-10-10 | major | First UI-parity audit: point entry, snaps, tracking, dynamic input, grips, selection, command line, chrome, navigation, keys |
+| 2026-10-10 | major | First UI-parity audit: point entry, snaps, tracking, dynamic input, grips, selection, command line, chrome, navigation, keys

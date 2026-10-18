@@ -24,7 +24,7 @@ pub const UI_COMMANDS: &[(&str, &str, &[&str], Option<&str>)] = &[
     ("ui.newtemplate", "New from Template...", &["File", "New from Template..."], None),
     ("ui.saveas", "Save As...", &[], None),
     ("ui.sample", "Open Sample Drawing", &["Help", "Open Sample Drawing"], None),
-    ("help.discord", "Join the CADCraft Discord...", &["Help", "Join the CADCraft Discord..."], None),
+    ("help.discord", "Join the ArtCraft Discord…", &["Help", "Join the ArtCraft Discord…"], None),
     ("help.website", "CADCraft Website", &["Help", "CADCraft Website"], None),
     ("help.artcraftWebsite", "ArtCraft Website", &["Help", "ArtCraft Website"], None),
     ("help.github", "CADCraft on GitHub", &["Help", "CADCraft on GitHub"], None),
