@@ -31,8 +31,9 @@ pub fn url_for(id: &str) -> Option<&'static str> {
 /// Open `url` in the system browser and note it in the status bar. Prefers
 /// the platform `open_url` service; falls back to queuing `ui.pending_url` for `ctx.open_url`.
 pub fn open(app: &mut CadApp, url: &str) -> Value {
-    let opened = app.services.open_url.as_ref().is_some_and(|f| f(url).is_ok());
-    if !opened {
+    if app.services.open_url.as_ref().is_some_and(|f| f(url).is_ok()) {
+        app.ui.pending_url = None;
+    } else {
         app.ui.pending_url = Some(url.to_string());
     }
     app.set_status(format!("Opened {url}"));
@@ -66,9 +67,11 @@ mod tests {
             assert_eq!(app.status.as_ref().map(|(s, _)| s.as_str()), Some(format!("Opened {url}").as_str()));
         }
 
-        // The direct open() helper also routes through the service.
+        // The direct open() helper also routes through the service and clears any stale pending_url.
+        app.ui.pending_url = Some("https://example.com/stale".to_string());
         open(&mut app, DISCORD);
         assert_eq!(opened.lock().unwrap().last().map(String::as_str), Some(DISCORD));
+        assert_eq!(app.ui.pending_url, None);
     }
 
     #[test]
@@ -107,5 +110,11 @@ mod tests {
         assert_eq!(r["url"], APP_PAGE);
         assert_eq!(app.ui.pending_url.as_deref(), Some(APP_PAGE));
         assert_eq!(app.status.as_ref().map(|(s, _)| s.as_str()), Some(format!("Opened {APP_PAGE}").as_str()));
+
+        // When the platform service fails, pending_url queues the URL for fallback.
+        let failing_services = crate::Services { open_url: Some(Box::new(|_| Err("failed".to_string()))), ..Default::default() };
+        let mut app_fail = CadApp::new(Session::empty(), failing_services);
+        open(&mut app_fail, GITHUB);
+        assert_eq!(app_fail.ui.pending_url.as_deref(), Some(GITHUB));
     }
 }
