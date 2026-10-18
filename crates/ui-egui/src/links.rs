@@ -25,10 +25,7 @@ pub fn url_for(id: &str) -> Option<&'static str> {
     match id {
         // Keep the legacy ID working for callers using the original Discord command.
         "ui.discord" => Some(DISCORD),
-        other => COMMANDS
-            .iter()
-            .find(|command| command.0 == other)
-            .map(|command| command.1),
+        other => COMMANDS.iter().find(|command| command.0 == other).map(|command| command.1),
     }
 }
 
@@ -83,15 +80,8 @@ mod tests {
             let result = app.run(id, json!({})).unwrap();
 
             assert_eq!(result["url"], *url, "{id}");
-            assert_eq!(
-                opened.lock().unwrap().last().map(String::as_str),
-                Some(*url),
-                "{id}"
-            );
-            assert_eq!(
-                app.status.as_ref().map(|(status, _)| status.as_str()),
-                Some(format!("Opened {url}").as_str())
-            );
+            assert_eq!(opened.lock().unwrap().last().map(String::as_str), Some(*url), "{id}");
+            assert_eq!(app.status.as_ref().map(|(status, _)| status.as_str()), Some(format!("Opened {url}").as_str()));
         }
 
         // Direct opening also clears any stale pending URL after success.
@@ -99,10 +89,7 @@ mod tests {
 
         open(&mut app, DISCORD);
 
-        assert_eq!(
-            opened.lock().unwrap().last().map(String::as_str),
-            Some(DISCORD)
-        );
+        assert_eq!(opened.lock().unwrap().last().map(String::as_str), Some(DISCORD));
         assert_eq!(app.ui.pending_url, None);
     }
 
@@ -111,11 +98,7 @@ mod tests {
         let app = CadApp::new(Session::empty(), Default::default());
         let tree = crate::menus::tree(&app);
 
-        let help = tree
-            .into_iter()
-            .find(|(menu, _)| menu == "Help")
-            .map(|(_, entries)| entries)
-            .unwrap_or_default();
+        let help = tree.into_iter().find(|(menu, _)| menu == "Help").map(|(_, entries)| entries).unwrap_or_default();
 
         let items: Vec<(String, String)> = help
             .into_iter()
@@ -127,25 +110,13 @@ mod tests {
 
         let expected = vec![
             ("Open Sample Drawing".to_string(), "ui.sample".to_string()),
-            (
-                "Join the ArtCraft Discord…".to_string(),
-                "help.discord".to_string(),
-            ),
+            ("Join the ArtCraft Discord…".to_string(), "help.discord".to_string()),
             ("CADCraft Website".to_string(), "help.website".to_string()),
-            (
-                "ArtCraft Website".to_string(),
-                "help.artcraftWebsite".to_string(),
-            ),
+            ("ArtCraft Website".to_string(), "help.artcraftWebsite".to_string()),
             ("CADCraft on GitHub".to_string(), "help.github".to_string()),
-            (
-                "Report an Issue...".to_string(),
-                "help.reportIssue".to_string(),
-            ),
+            ("Report an Issue...".to_string(), "help.reportIssue".to_string()),
             ("About CADCraft".to_string(), "ui.dialog.about".to_string()),
-            (
-                "Command Reference".to_string(),
-                "ui.dialog.commands".to_string(),
-            ),
+            ("Command Reference".to_string(), "ui.dialog.commands".to_string()),
         ];
 
         assert_eq!(items, expected);
@@ -161,16 +132,10 @@ mod tests {
 
         assert_eq!(result["url"], APP_PAGE);
         assert_eq!(app.ui.pending_url.as_deref(), Some(APP_PAGE));
-        assert_eq!(
-            app.status.as_ref().map(|(status, _)| status.as_str()),
-            Some(format!("Opened {APP_PAGE}").as_str())
-        );
+        assert_eq!(app.status.as_ref().map(|(status, _)| status.as_str()), Some(format!("Opened {APP_PAGE}").as_str()));
 
         // When the platform service fails, queue the URL for fallback.
-        let failing_services = crate::Services {
-            open_url: Some(Box::new(|_| Err("failed".to_string()))),
-            ..Default::default()
-        };
+        let failing_services = crate::Services { open_url: Some(Box::new(|_| Err("failed".to_string()))), ..Default::default() };
 
         let mut app_fail = CadApp::new(Session::empty(), failing_services);
 
