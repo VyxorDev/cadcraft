@@ -1,0 +1,46 @@
+name: Rebase PR 1550 docs helper
+
+on:
+  push:
+    branches:
+      - rebase-1550
+
+permissions:
+  contents: write
+
+jobs:
+  update-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: rebase-1550
+      - name: Replay UI parity history entry
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path("docs/ui-parity.md")
+          text = path.read_text(encoding="utf-8")
+          old = "> **Last reviewed:** 2026-10-10 · **Last updated:** 2026-10-13 · **Change:** minor (stable dash anchors on filled-object highlights) · **Target:** Autodesk AutoCAD 2027 for Mac (26.0)"
+          new = "> **Last reviewed:** 2026-10-10 · **Last updated:** 2026-10-18 · **Change:** minor (Help menu links to Discord, websites, GitHub, and issue reporting) · **Target:** Autodesk AutoCAD 2027 for Mac (26.0)"
+          if old not in text:
+              raise SystemExit("expected UI parity header not found")
+          text = text.replace(old, new, 1)
+
+          row = "| 2026-10-18 | minor | Help menu community and project links (Discord, CADCraft website, ArtCraft website, GitHub, Report an Issue; #1537, #1550) |"
+          if row not in text:
+              marker = "|---|---|---|\n"
+              if marker not in text:
+                  raise SystemExit("revision history table marker not found")
+              text = text.replace(marker, marker + row + "\n", 1)
+
+          path.write_text(text, encoding="utf-8")
+      - name: Commit docs and remove helper
+        run: |
+          rm .github/workflows/rebase-1550-docs.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/ui-parity.md .github/workflows/rebase-1550-docs.yml
+          git commit -m "docs: restore Help menu parity history"
+          git push origin HEAD:rebase-1550
