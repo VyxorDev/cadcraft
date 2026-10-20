@@ -1,0 +1,28 @@
+name: Validate PR 1550 rebased tree
+
+on:
+  push:
+    branches:
+      - rebase-1550
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 2879e86246f18af2430d7a873543d8644dcf490d
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Cargo fmt
+        run: cargo fmt --check
+      - name: Link tests
+        run: cargo test -p cadcraft-ui-egui --lib links
+      - name: Translation coverage test
+        run: cargo test -p cadcraft-ui-egui --lib translations_cover_commands_menus_tools_and_snap_labels
+      - name: UI egui library tests
+        run: cargo test -p cadcraft-ui-egui --lib -j 2
