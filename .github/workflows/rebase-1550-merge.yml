@@ -1,0 +1,28 @@
+name: Rebase PR 1550 merge helper
+
+on:
+  push:
+    branches:
+      - rebase-1550
+
+permissions:
+  contents: write
+
+jobs:
+  merge-pr-head:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: rebase-1550
+          fetch-depth: 0
+      - name: Merge original PR tree onto current main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin issue-1537-help-menu
+          git merge --no-commit --no-ff -X ours origin/issue-1537-help-menu
+          rm .github/workflows/rebase-1550-merge.yml
+          git add -A
+          git commit -m "temp: merge PR 1550 onto current main"
+          git push origin HEAD:rebase-1550
