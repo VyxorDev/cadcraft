@@ -110,7 +110,7 @@ mod tests {
 
         let expected = vec![
             ("Open Sample Drawing".to_string(), "ui.sample".to_string()),
-            ("Join the ArtCraft Discord…".to_string(), "help.discord".to_string()),
+            ("Join the CADCraft Discord...".to_string(), "help.discord".to_string()),
             ("CADCraft Website".to_string(), "help.website".to_string()),
             ("ArtCraft Website".to_string(), "help.artcraftWebsite".to_string()),
             ("CADCraft on GitHub".to_string(), "help.github".to_string()),
