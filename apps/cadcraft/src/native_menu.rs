@@ -52,7 +52,8 @@ impl NativeMenu {
         let mut counter = 0usize;
         let app_menu = Submenu::new("CADCraft", true);
         let about = MenuItem::with_id("cc-about", i18n::tr(language, "About CADCraft"), true, None);
-        let discord = MenuItem::with_id("cc-discord", i18n::tr(language, "Join the ArtCraft Discord…"), true, None);
+        let discord_label = menus::localized_link_label(language, menus::CADCRAFT_DISCORD_LABEL);
+        let discord = MenuItem::with_id("cc-discord", discord_label, true, None);
         let predefined = vec![
             ("Services", PredefinedMenuItem::services(Some(i18n::tr(language, "Services")))),
             ("Hide CADCraft", PredefinedMenuItem::hide(Some(i18n::tr(language, "Hide CADCraft")))),
@@ -70,7 +71,7 @@ impl NativeMenu {
             }
         }
         items.insert("cc-about".into(), ("ui.dialog.about".into(), "About CADCraft".into(), about));
-        items.insert("cc-discord".into(), ("ui.discord".into(), "Join the ArtCraft Discord…".into(), discord));
+        items.insert("cc-discord".into(), ("help.discord".into(), menus::CADCRAFT_DISCORD_LABEL.into(), discord));
         items.insert("cc-settings".into(), ("options".into(), "Settings...".into(), settings));
         let _ = menu.append(&app_menu);
         for (title, entries) in menus::tree(app) {
@@ -111,15 +112,11 @@ impl NativeMenu {
         build(&sub, &menus::recent_entries(app), &mut self.items, &mut self.submenus, &mut self.counter, self.language);
     }
 
-    /// Drain queued menu events into commands (Discord opens externally), rebuild Open Recent, retranslate on a language change and refresh enablement when 300 ms have elapsed.
+    /// Drain queued menu events into commands, rebuild Open Recent, retranslate on a language change and refresh enablement when 300 ms have elapsed.
     pub fn poll(&mut self, app: &mut CadApp, ctx: &egui::Context) {
         while let Ok(ev) = self.events.try_recv() {
             if let Some((cmd, _, _)) = self.items.get(ev.id.as_ref()) {
-                if cmd == "ui.discord" {
-                    ctx.open_url(egui::OpenUrl::new_tab("https://discord.gg/artcraft"));
-                } else {
-                    menus::activate_native(app, ctx, &cmd.clone());
-                }
+                menus::activate_native(app, ctx, &cmd.clone());
                 ctx.request_repaint();
             }
         }
@@ -128,7 +125,7 @@ impl NativeMenu {
         if self.language != language {
             self.language = language;
             for (_, label, item) in self.items.values() {
-                item.set_text(i18n::tr(language, label));
+                item.set_text(menus::localized_link_label(language, label));
             }
             for (label, item) in &self.predefined {
                 item.set_text(i18n::tr(language, label));
@@ -176,7 +173,7 @@ fn build(
             Entry::Item { label, id, shortcut, enabled } => {
                 *counter += 1;
                 let mid = format!("cc{counter}");
-                let i = MenuItem::with_id(mid.clone(), i18n::tr(language, label), *enabled, shortcut.as_deref().and_then(accel));
+                let i = MenuItem::with_id(mid.clone(), menus::localized_link_label(language, label), *enabled, shortcut.as_deref().and_then(accel));
                 let _ = parent.append(&i);
                 items.insert(mid, (id.clone(), label.clone(), i));
             }

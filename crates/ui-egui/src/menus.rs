@@ -15,6 +15,44 @@ pub const CLEAR_RECENT: &str = "Clear Recent Files";
 const RECENT_ITEM: &str = "ui.recent.";
 const RECENT_CLEAR: &str = "ui.recent.clear";
 
+pub const CADCRAFT_DISCORD_LABEL: &str = "Join the CADCraft Discord...";
+const ARTCRAFT_DISCORD_LABEL: &str = "Join the ArtCraft Discord…";
+const DISCORD_URL: &str = "https://discord.gg/artcraft";
+const CADCRAFT_URL: &str = "https://getartcraft.com/apps/cadcraft";
+const ARTCRAFT_URL: &str = "https://getartcraft.com";
+const GITHUB_URL: &str = "https://github.com/storytold/cadcraft";
+const ISSUES_URL: &str = "https://github.com/storytold/cadcraft/issues";
+
+/// Fixed project destinations exposed by the Help menu. `ui.discord` remains an alias for
+/// existing scripts and the macOS application-menu item.
+pub fn link_url(id: &str) -> Option<&'static str> {
+    match id {
+        "ui.discord" | "help.discord" => Some(DISCORD_URL),
+        "help.website" => Some(CADCRAFT_URL),
+        "help.artcraftWebsite" => Some(ARTCRAFT_URL),
+        "help.github" => Some(GITHUB_URL),
+        "help.reportIssue" => Some(ISSUES_URL),
+        _ => None,
+    }
+}
+
+/// Translate a menu item for a native menu. The shared Discord invite already has translations
+/// under its historic ArtCraft label, so preserve those translations while displaying CADCraft's
+/// product name as requested by the CADCraft Help menu.
+pub fn localized_link_label(language: &str, label: &str) -> String {
+    if label == CADCRAFT_DISCORD_LABEL {
+        return crate::i18n::tr(language, ARTCRAFT_DISCORD_LABEL).replace("ArtCraft", "CADCraft");
+    }
+    crate::i18n::tr(language, label).to_string()
+}
+
+fn in_window_label(label: &str) -> String {
+    if label == CADCRAFT_DISCORD_LABEL {
+        return crate::i18n::t(ARTCRAFT_DISCORD_LABEL).replace("ArtCraft", "CADCraft");
+    }
+    crate::i18n::t(label).to_string()
+}
+
 /// UI-only commands: (id, label, menu path, shortcut).
 pub const UI_COMMANDS: &[(&str, &str, &[&str], Option<&str>)] = &[
     ("ui.spacemouse", "3D Mouse...", &["Tools", "3D Mouse..."], None),
@@ -26,6 +64,11 @@ pub const UI_COMMANDS: &[(&str, &str, &[&str], Option<&str>)] = &[
     ("ui.newtemplate", "New from Template...", &["File", "New from Template..."], None),
     ("ui.saveas", "Save As...", &[], None),
     ("ui.sample", "Open Sample Drawing", &["Help", "Open Sample Drawing"], None),
+    ("help.discord", CADCRAFT_DISCORD_LABEL, &["Help", CADCRAFT_DISCORD_LABEL], None),
+    ("help.website", "CADCraft Website", &["Help", "CADCraft Website"], None),
+    ("help.artcraftWebsite", "ArtCraft Website", &["Help", "ArtCraft Website"], None),
+    ("help.github", "CADCraft on GitHub", &["Help", "CADCraft on GitHub"], None),
+    ("help.reportIssue", "Report an Issue...", &["Help", "Report an Issue..."], None),
     ("ui.toggle.toolsets", "Tool Sets", &["Window", "Tool Sets"], Some("Cmd+3")),
     ("ui.panel.properties", "Properties Inspector", &["Window", "Properties Inspector"], Some("Cmd+1")),
     ("ui.panel.layers", "Layers Palette", &["Window", "Layers Palette"], None),
@@ -68,7 +111,7 @@ pub const UI_COMMANDS: &[(&str, &str, &[&str], Option<&str>)] = &[
     #[cfg(not(target_arch = "wasm32"))]
     ("ui.updates.check", "Check for Updates…", &["Help", "Check for Updates…"], None),
     ("ui.dialog.about", "About CADCraft", &["Help", "About CADCraft"], None),
-    ("ui.dialog.commands", "Command Reference", &["Help", "CADCraft Help"], Some("F1")),
+    ("ui.dialog.commands", "Command Reference", &["Help", "Command Reference"], Some("F1")),
     ("ui.toggle.history", "Command History", &["Window", "Command History"], Some("F2")),
     ("ui.cmdline.lines", "Command Line History Lines", &[], None),
     ("ui.cmdline.clear", "Clear Command History", &[], None),
@@ -310,6 +353,10 @@ fn user_qsave(app: &mut CadApp) -> Option<Result<Value, String>> {
 }
 
 fn run_ui_command_inner(app: &mut CadApp, id: &str, params: &Value) -> Option<Result<Value, String>> {
+    if let Some(url) = link_url(id) {
+        app.set_status(format!("Opened {url}"));
+        return Some(Ok(json!({ "url": url })));
+    }
     if let Some(result) = route_ui_subsystems(app, id, params) {
         return Some(result);
     }
@@ -659,7 +706,7 @@ pub(crate) fn shortcut_label(s: &str, mac: bool) -> String {
 pub(crate) fn entry_ui(ui: &mut egui::Ui, e: &Entry, clicked: &mut Option<String>) {
     match e {
         Entry::Item { label, id, shortcut, enabled } => {
-            let mut b = egui::Button::new(crate::i18n::t(label));
+            let mut b = egui::Button::new(in_window_label(label));
             if let Some(s) = shortcut {
                 b = b.shortcut_text(shortcut_label(s, ui.ctx().os().is_mac()));
             }
@@ -700,7 +747,12 @@ pub fn menu_bar(app: &mut CadApp, ui: &mut egui::Ui) {
         },
     );
     if let Some(id) = clicked {
-        activate(app, &id);
+        if let Some(url) = link_url(&id) {
+            ui.ctx().open_url(egui::OpenUrl::new_tab(url));
+            app.set_status(format!("Opened {url}"));
+        } else {
+            activate(app, &id);
+        }
     }
 }
 
@@ -732,6 +784,11 @@ pub fn activate(app: &mut CadApp, id: &str) {
 /// the keyboard, in the main window or a floating panel's own window, the field gets the key
 /// and the drawing command does not run.
 pub fn activate_native(app: &mut CadApp, ctx: &egui::Context, id: &str) {
+    if let Some(url) = link_url(id) {
+        ctx.open_url(egui::OpenUrl::new_tab(url));
+        app.set_status(format!("Opened {url}"));
+        return;
+    }
     let (Some(window), Some(text)) = (text_field_window(ctx), text_command(id, ctx.os().is_mac())) else {
         activate(app, id);
         return;
@@ -950,6 +1007,34 @@ mod tests {
             }
         }
         assert!(missing.is_empty(), "shown but not run: {missing:?}");
+    }
+
+    #[test]
+    fn help_menu_lists_community_links_in_requested_order() {
+        let app = CadApp::new(Session::empty(), Services::default());
+        let tree = super::tree(&app);
+        let help = tree.into_iter().find(|(menu, _)| menu == "Help").map(|(_, entries)| entries).unwrap_or_default();
+        let ids: Vec<String> = help
+            .into_iter()
+            .filter_map(|entry| match entry {
+                super::Entry::Item { id, .. } => Some(id),
+                _ => None,
+            })
+            .collect();
+        let expected = ["ui.sample", "help.discord", "help.website", "help.artcraftWebsite", "help.github", "help.reportIssue"];
+        let positions: Vec<usize> = expected.iter().map(|id| ids.iter().position(|actual| actual == id).unwrap()).collect();
+        assert!(positions.windows(2).all(|pair| pair[0] < pair[1]), "Help link order: {ids:?}");
+    }
+
+    #[test]
+    fn project_links_and_discord_localization_are_stable() {
+        assert_eq!(super::link_url("ui.discord"), Some("https://discord.gg/artcraft"));
+        assert_eq!(super::link_url("help.website"), Some("https://getartcraft.com/apps/cadcraft"));
+        assert_eq!(super::link_url("help.artcraftWebsite"), Some("https://getartcraft.com"));
+        assert_eq!(super::link_url("help.github"), Some("https://github.com/storytold/cadcraft"));
+        assert_eq!(super::link_url("help.reportIssue"), Some("https://github.com/storytold/cadcraft/issues"));
+        assert_eq!(super::localized_link_label("de", super::CADCRAFT_DISCORD_LABEL), "Dem CADCraft-Discord beitreten…");
+        assert_eq!(super::localized_link_label("uk", super::CADCRAFT_DISCORD_LABEL), "Приєднатися до Discord CADCraft…");
     }
 
     #[test]
